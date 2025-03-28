@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"log"
 	"strings"
+	"sync"
 	"syscall"
 
 	"gioui.org/layout"
@@ -13,7 +14,13 @@ import (
 	"github.com/acelikesghosts/gltest/utils"
 )
 
-var titles, err = utils.GetWindowTitles()
+// var titles, err = utils.GetWindowTitles()
+
+var (
+	titles     []utils.WindowInfo
+	titlesErr  error
+	titlesOnce sync.Once
+)
 
 var editor widget.Editor
 var list widget.List
@@ -24,10 +31,17 @@ func onTitleClicked(hwnd uintptr) {
 	utils.FocusWindow(syscall.Handle(hwnd))
 }
 
+func loadTitles() {
+	titlesOnce.Do(func() {
+		titles, titlesErr = utils.GetWindowTitles()
+	})
+}
+
 func ListWindows(gtx layout.Context, theme *material.Theme) {
 	// log.Printf("getting window titles")
-	if err != nil {
-		panic(err)
+	loadTitles()
+	if titlesErr != nil {
+		panic(titlesErr)
 	}
 
 	// log.Printf("iterating titles")
