@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"path/filepath"
 	"syscall"
 	"unsafe"
 )
@@ -57,6 +58,25 @@ func enumWindowsProc(hwnd syscall.Handle, lparam uintptr) uintptr {
 	// 1. marked as an app window, OR
 	// 2. has proper window decorations (caption and frame)
 	if isAppWindow || (hasCaption && hasThickFrame) {
+		var pid uint32
+
+		procGetWindowThreadProcessId.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&pid)))
+		hProcess, _, _ := procOpenProcess.Call(PROCESS_QUERY_LIMITED_INFORMATION|PROCESS_VM_READ, 0, uintptr(pid))
+
+		if hProcess != 0 {
+			defer procCloseHandle.Call(hProcess)
+
+			exeBuf := make([]uint16, 260)
+			procGetModuleFileNameExW.Call(hProcess, 0, uintptr(unsafe.Pointer(&exeBuf[0])), uintptr(len(exeBuf)))
+			exePath := syscall.UTF16ToString(exeBuf)
+
+			if exePath != "" {
+				exeName := filepath.Base(exePath)
+				// Combine executable name with window title
+				title = exeName + " - " + title
+			}
+		}
+
 		*windowInfoList = append(*windowInfoList, WindowInfo{
 			Hwnd:  hwnd,
 			Title: title,
