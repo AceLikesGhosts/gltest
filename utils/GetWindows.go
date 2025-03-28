@@ -11,11 +11,6 @@ type WindowInfo struct {
 	Title string
 }
 
-// for GetWindowRect
-type RECT struct {
-	Left, Top, Right, Bottom int32
-}
-
 func enumWindowsProc(hwnd syscall.Handle, lparam uintptr) uintptr {
 	// language server isnt very happy about this
 	//  but this is completely valid
@@ -91,7 +86,6 @@ func GetWindowTitles() ([]WindowInfo, error) {
 
 	enumWindowsProcPtr := syscall.NewCallback(enumWindowsProc)
 	procEnumWindows.Call(enumWindowsProcPtr, uintptr(unsafe.Pointer(&windowInfoList)))
-	// return nil, fmt.Errorf("test")
 
 	return windowInfoList, nil
 }
