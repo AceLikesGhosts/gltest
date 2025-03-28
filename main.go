@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"runtime"
 
 	"gioui.org/app"
 	"gioui.org/op"
@@ -11,6 +12,10 @@ import (
 )
 
 func main() {
+	if runtime.GOOS != "windows" {
+		panic("This application does not work outside of Windows and is heavily dependent on Windows syscalls.")
+	}
+
 	go func() {
 		window := new(app.Window)
 		err := run(window)
